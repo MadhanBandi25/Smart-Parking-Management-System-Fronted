@@ -816,7 +816,7 @@ index.html
 
 The Spring Boot backend for this project is available here:
 
-👉 **[SmartParking Backend — GitHub](https://github.com/MadhanBandi25/Smart-Parking-Management-System-Fronted)**
+👉 **[SmartParking Backend — GitHub](https://github.com/MadhanBandi25/Smart-Parking-Management-System)**
 
 The backend handles:
 - JWT authentication & role-based authorization (Spring Security)
