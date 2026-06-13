@@ -1628,38 +1628,43 @@ applyTheme();
   window._locCityDebTimer = setTimeout(()=>renderLocCities(val), 150);
 }
 
-
  async function renderLocCities(val){
   const q = val.toLowerCase();
   const listEl = document.getElementById('locCityList');
 
-  // Static matches
-   const staticMatches = CITIES.filter(c => {
-  if(!q) return true;
-  const name = c.name.toLowerCase();
-  // Match: starts with OR contains the query
-  return name.startsWith(q) || name.includes(q);
-}).sort((a,b) => {
-  // Prioritize startsWith over contains
-  const an = a.name.toLowerCase();
-  const bn = b.name.toLowerCase();
-  const aStarts = an.startsWith(q) ? 0 : 1;
-  const bStarts = bn.startsWith(q) ? 0 : 1;
-  return aStarts - bStarts || an.localeCompare(bn);
-}).slice(0, 12);
+  const staticMatches = CITIES.filter(c => {
+    if(!q) return true;
+    const name = c.name.toLowerCase();
+    return name.startsWith(q) || name.includes(q);
+  }).sort((a,b) => {
+    const an = a.name.toLowerCase();
+    const bn = b.name.toLowerCase();
+    const aStarts = an.startsWith(q) ? 0 : 1;
+    const bStarts = bn.startsWith(q) ? 0 : 1;
+    return aStarts - bStarts || an.localeCompare(bn);
+  }).slice(0, 12);
+
   const staticNames = new Set(staticMatches.map(c => c.name.toLowerCase()));
 
-  // Fetch DB cities (cached)
+  // ── FIX: use role-appropriate endpoint ──
   let dbCities = window._dbCities || [];
   if(!window._dbCities){
     try{
-      const areas = await api('GET', '/api/parking-areas/all');
+      let areas = [];
+      if(ROLE === 'ADMIN' || ROLE === 'PARKING_OWNER'){
+        areas = await api('GET', '/api/parking-areas/all');
+      } else {
+        // USER and SECURITY: fetch via search endpoint with empty query
+        // or a known working public endpoint
+        areas = await api('GET', '/api/parking-areas/search/city?city=');
+      }
       const citySet = new Set();
       areas.forEach(a => { if(a.city && !a.deleted) citySet.add(a.city.trim()); });
       dbCities = [...citySet].sort();
       window._dbCities = dbCities;
     }catch{ dbCities = []; }
   }
+  // ... rest unchanged
 
   // DB cities not already in static list
    const dbMatches = dbCities.filter(c => {
@@ -1737,7 +1742,12 @@ applyTheme();
   // DB cities (cached)
   if(!window._dbCities){
     try{
-      const areas = await api('GET', '/api/parking-areas/all');
+      let areas = [];
+      if(ROLE === 'ADMIN' || ROLE === 'PARKING_OWNER'){
+        areas = await api('GET', '/api/parking-areas/all');
+      } else {
+        areas = await api('GET', '/api/parking-areas/search/city?city=');
+      }
       const citySet = new Set();
       areas.forEach(a => { if(a.city && !a.deleted) citySet.add(a.city.trim()); });
       window._dbCities = [...citySet].sort();
